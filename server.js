@@ -11,7 +11,7 @@ const app = express();
 
 
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.RENDER_EXTERNAL_URL || "";
+const BASE_URL = process.env.RENDER_EXTERNAL_URL || "https://ai-blog-website-x7w3.onrender.com";
 
 const HF_API_KEY = process.env.HUGGINGFACE_API_KEY
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY
