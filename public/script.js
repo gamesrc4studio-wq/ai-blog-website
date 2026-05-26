@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3000"; // Backend API URL
+const API_URL = "https://ai-blog-website-x7w3.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
     checkUserProfile();
