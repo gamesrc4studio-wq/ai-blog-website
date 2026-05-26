@@ -1,0 +1,466 @@
+/* =========================================
+   📰 NEWSPAPER / EDITORIAL STYLE BLOG DESIGN
+========================================= */
+
+:root {
+    --bg: #f5f1e8;
+    --paper: #fffdf8;
+    --paper-dark: #ece7dc;
+
+    --text: #111111;
+    --text-soft: #5f5a52;
+    --border: #d6d0c4;
+
+    --accent: #1b1b1b;
+
+    --shadow:
+        0 8px 24px rgba(0,0,0,0.04);
+
+    --transition: 0.35s ease;
+}
+
+/* =========================================
+   🌍 BODY
+========================================= */
+
+body {
+    margin: 0;
+    padding: 0;
+
+    background: var(--bg);
+
+    color: var(--text);
+
+    font-family: "Libre Baskerville", serif;
+
+    line-height: 1.8;
+
+    -webkit-font-smoothing: antialiased;
+}
+
+/* =========================================
+   🧭 HEADER
+========================================= */
+
+header {
+    position: sticky;
+    top: 0;
+    z-index: 999;
+
+    background: rgba(245, 241, 232, 0.94);
+
+    backdrop-filter: blur(10px);
+
+    border-bottom: 1px solid var(--border);
+
+    padding: 24px 70px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.logo a {
+    text-decoration: none;
+
+    color: var(--text);
+
+    font-size: 2.2rem;
+    font-weight: 700;
+
+    letter-spacing: -1px;
+
+    font-family: "Playfair Display", serif;
+}
+
+nav ul {
+    list-style: none;
+
+    display: flex;
+    gap: 36px;
+}
+
+nav ul li a {
+    text-decoration: none;
+
+    color: var(--text-soft);
+
+    font-size: 0.95rem;
+    font-weight: 600;
+
+    text-transform: uppercase;
+    letter-spacing: 1px;
+
+    transition: var(--transition);
+}
+
+nav ul li a:hover {
+    color: var(--text);
+}
+
+/* =========================================
+   📰 HERO SECTION
+========================================= */
+
+.hero {
+    max-width: 1100px;
+
+    margin: auto;
+
+    text-align: center;
+
+    padding: 100px 20px 80px;
+}
+
+.hero h1 {
+    font-size: clamp(3rem, 7vw, 5.8rem);
+
+    line-height: 1.05;
+
+    font-weight: 700;
+
+    margin-bottom: 28px;
+
+    letter-spacing: -2px;
+
+    font-family: "Playfair Display", serif;
+}
+
+.hero p {
+    max-width: 720px;
+
+    margin: auto;
+
+    color: var(--text-soft);
+
+    font-size: 1.1rem;
+}
+
+/* =========================================
+   🔍 SEARCH
+========================================= */
+
+.search-section {
+    display: flex;
+    justify-content: center;
+
+    margin-bottom: 90px;
+}
+
+.search-box {
+    width: min(650px, 92%);
+}
+
+#searchBar {
+    width: 100%;
+
+    padding: 20px 28px;
+
+    border: none;
+    border-bottom: 2px solid var(--border);
+
+    background: transparent;
+
+    font-size: 1rem;
+
+    text-align: center;
+
+    color: var(--text);
+
+    font-family: inherit;
+
+    transition: var(--transition);
+}
+
+#searchBar::placeholder {
+    color: #8a8479;
+}
+
+#searchBar:focus {
+    outline: none;
+
+    border-color: var(--text);
+}
+
+/* =========================================
+   📰 BLOG SECTION
+========================================= */
+
+#latestBlogs {
+    max-width: 1280px;
+
+    margin: auto;
+
+    padding: 0 24px 100px;
+}
+
+#latestBlogs h2 {
+    text-align: center;
+
+    font-size: 2.8rem;
+
+    margin-bottom: 70px;
+
+    font-family: "Playfair Display", serif;
+}
+
+/* =========================================
+   🧊 BLOG GRID
+========================================= */
+
+#savedBlogs {
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(360px, 1fr));
+
+    gap: 50px;
+}
+
+/* =========================================
+   📰 BLOG CARD
+========================================= */
+
+.blog-post {
+    background: var(--paper);
+
+    border: 1px solid var(--border);
+
+    overflow: hidden;
+
+    transition:
+        transform 0.4s ease,
+        box-shadow 0.4s ease;
+
+    box-shadow: var(--shadow);
+}
+
+.blog-post:hover {
+    transform: translateY(-6px);
+
+    box-shadow:
+        0 18px 40px rgba(0,0,0,0.08);
+}
+
+/* =========================================
+   🖼 IMAGE
+========================================= */
+
+.blog-image {
+    width: 100%;
+    height: 260px;
+
+    object-fit: cover;
+
+    filter: grayscale(15%);
+
+    transition: transform 0.7s ease;
+}
+
+.blog-post:hover .blog-image {
+    transform: scale(1.03);
+}
+
+/* =========================================
+   📄 CONTENT
+========================================= */
+
+.blog-content {
+    padding: 34px;
+}
+
+/* CATEGORY */
+
+.blog-category {
+    display: inline-block;
+
+    margin-bottom: 18px;
+
+    font-size: 0.8rem;
+
+    font-weight: 700;
+
+    letter-spacing: 1.5px;
+
+    text-transform: uppercase;
+
+    color: var(--text-soft);
+}
+
+/* TITLE */
+
+.blog-title {
+    font-size: 2rem;
+
+    line-height: 1.2;
+
+    margin-bottom: 18px;
+
+    font-family: "Playfair Display", serif;
+
+    font-weight: 700;
+
+    color: var(--text);
+}
+
+/* DESCRIPTION */
+
+.blog-description {
+    font-size: 1rem;
+
+    color: var(--text-soft);
+
+    margin-bottom: 26px;
+}
+
+/* META */
+
+.blog-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding-top: 18px;
+
+    border-top: 1px solid var(--border);
+
+    font-size: 0.9rem;
+
+    color: var(--text-soft);
+}
+
+/* =========================================
+   🚀 READ BUTTON
+========================================= */
+
+.read-more {
+    display: inline-block;
+
+    margin-top: 28px;
+
+    text-decoration: none;
+
+    color: var(--text);
+
+    font-weight: 700;
+
+    font-size: 0.95rem;
+
+    letter-spacing: 0.5px;
+
+    position: relative;
+}
+
+.read-more::after {
+    content: "";
+
+    position: absolute;
+
+    left: 0;
+    bottom: -5px;
+
+    width: 100%;
+    height: 1px;
+
+    background: var(--text);
+
+    transform: scaleX(0);
+
+    transform-origin: left;
+
+    transition: transform 0.3s ease;
+}
+
+.read-more:hover::after {
+    transform: scaleX(1);
+}
+
+/* =========================================
+   🌍 FOOTER
+========================================= */
+
+footer {
+    margin-top: 100px;
+
+    padding: 40px 20px;
+
+    text-align: center;
+
+    border-top: 1px solid var(--border);
+
+    color: var(--text-soft);
+
+    background: var(--paper-dark);
+
+    font-size: 0.95rem;
+}
+
+/* =========================================
+   ✨ SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #ece5d8;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #b8b1a5;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #9d9587;
+}
+
+/* =========================================
+   📱 RESPONSIVE
+========================================= */
+
+@media (max-width: 900px) {
+    header {
+        padding: 20px 24px;
+    }
+
+    .hero {
+        padding-top: 80px;
+    }
+}
+
+@media (max-width: 768px) {
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+
+        gap: 18px;
+    }
+
+    nav ul {
+        flex-wrap: wrap;
+        gap: 18px;
+    }
+
+    .hero h1 {
+        font-size: 3rem;
+    }
+
+    #savedBlogs {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h1 {
+        font-size: 2.2rem;
+    }
+
+    .blog-content {
+        padding: 24px;
+    }
+
+    .blog-title {
+        font-size: 1.6rem;
+    }
+}

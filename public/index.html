@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Blog Generator</title>
+    <link rel="stylesheet" href="/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.1/marked.min.js"></script>
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header>
+    <div class="logo">
+        <a href="/">AI Blog Generator</a>
+    </div>
+
+    <nav>
+        <ul>
+            <li><a href="/">Home</a></li>
+            <li><a href="#savedBlogs">Saved Blogs</a></li>
+            <li><a href="/abotus.html">About</a></li>
+            <li><a href="mailto:games.rc4.studio@gmail.com">Contact</a></li>
+        </ul>
+    </nav>
+
+    <div class="profile" id="profileSection"></div>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+    <h1>AI Blog Generator</h1>
+    <p>
+        Generate, manage, and explore futuristic AI-powered blogs
+        with premium design and intelligent content.
+    </p>
+</section>
+
+<!-- ================= SEARCH ================= -->
+<section class="search-section">
+    <div class="search-box">
+        <input
+            type="text"
+            id="searchBar"
+            placeholder="Search futuristic blogs..."
+            onkeyup="searchBlogs()"
+        />
+    </div>
+</section>
+
+<!-- ================= BLOGS ================= -->
+<section id="latestBlogs">
+    <h2>Saved Blogs</h2>
+    <div id="savedBlogs"></div>
+</section>
+
+<!-- ================= MODAL ================= -->
+<div id="blogModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle"></h2>
+        <img id="modalImage" class="blog-image" style="display:none;">
+        <div id="modalContent"></div>
+    </div>
+</div>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+    <p>&copy; 2025 AI Blog Generator. All rights reserved.</p>
+</footer>
+
+<script src="/script.js"></script>
+</body>
+</html>

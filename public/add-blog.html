@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Add Blog</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.0.1/marked.min.js"></script>
+<style>
+    /* ================================
+   ✨ ADD BLOG – CREATOR UI
+================================ */
+:root {
+    --bg: #0b0d10;
+    --surface: rgba(255,255,255,0.06);
+    --border: rgba(255,255,255,0.14);
+
+    --text: #f5f7fa;
+    --muted: #a1a6b0;
+    --accent: #6366f1;
+    --accent-strong: #4338ca;
+
+    --radius: 18px;
+    --shadow: 0 25px 80px rgba(0,0,0,0.45);
+}
+
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    padding: 50px 20px 80px;
+
+    font-family: 'Poppins', 'Inter', system-ui, sans-serif;
+    background: radial-gradient(1200px 600px at top, #12151c, #07090c);
+    color: var(--text);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* ================================
+   🧠 PAGE TITLE
+================================ */
+h1 {
+    font-size: 2.6rem;
+    font-weight: 800;
+    margin-bottom: 36px;
+    letter-spacing: -1px;
+
+    background: linear-gradient(90deg, #ffffff, #c7d2fe);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ================================
+   📦 FORM CARD
+================================ */
+input,
+select,
+button {
+    width: 100%;
+    max-width: 460px;
+}
+
+/* ================================
+   ✍️ INPUTS
+================================ */
+input[type="text"],
+input[type="file"],
+select {
+    margin: 12px 0;
+    padding: 16px 20px;
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+
+    color: var(--text);
+    font-size: 1rem;
+
+    backdrop-filter: blur(14px);
+    transition: all 0.3s ease;
+}
+
+input::placeholder {
+    color: rgba(255,255,255,0.45);
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow:
+        0 0 0 1px rgba(99,102,241,0.4),
+        0 20px 50px rgba(99,102,241,0.25);
+    transform: translateY(-1px);
+}
+
+/* File input tweak */
+input[type="file"] {
+    padding: 14px;
+    cursor: pointer;
+}
+image{
+    width: 50%;
+}
+/* ================================
+   🔽 SELECT
+================================ */
+select {
+    cursor: pointer;
+    appearance: none;
+}
+
+/* ================================
+   🚀 BUTTON
+================================ */
+button {
+    margin-top: 26px;
+    padding: 16px;
+
+    border-radius: 999px;
+    border: none;
+
+    background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+    color: #fff;
+
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+
+    cursor: pointer;
+    box-shadow: 0 18px 40px rgba(99,102,241,0.35);
+    transition: all 0.3s ease;
+}
+
+button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 60px rgba(99,102,241,0.5);
+}
+
+/* ================================
+   📄 BLOG OUTPUT
+================================ */
+#blogOutput {
+    margin-top: 60px;
+    width: 100%;
+    max-width: 900px;
+
+    padding: 36px;
+    border-radius: var(--radius);
+
+    background: var(--surface);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(16px);
+
+    box-shadow: var(--shadow);
+}
+
+/* Markdown preview */
+#blogOutput h1,
+#blogOutput h2,
+#blogOutput h3 {
+    margin-top: 40px;
+    margin-bottom: 16px;
+}
+
+#blogOutput p {
+    margin-bottom: 22px;
+    color: #e6e9ef;
+    line-height: 1.9;
+}
+
+/* ================================
+   📱 RESPONSIVE
+================================ */
+@media (max-width: 768px) {
+    h1 {
+        font-size: 2.1rem;
+    }
+
+    #blogOutput {
+        padding: 26px;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.9rem;
+    }
+
+    button {
+        font-size: 1rem;
+    }
+}
+
+</style>
+</head>
+<body>
+<h1>Add a New Blog</h1>
+
+<input type="text" id="topic" placeholder="Enter blog topic" required>
+
+<select id="imageSource">
+    
+    <option value="ai">AI Generated Image</option>
+    <option value="manual">Manual Upload</option>
+    <option value="none">No Image</option>
+</select>
+
+<input type="file" id="blogImage" accept="image/*">
+
+<button onclick="generateBlog()">Generate Blog</button>
+
+<div id="blogOutput"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="script.js"></script>
+<script>
+const imageSource = document.getElementById('imageSource');
+const blogImageInput = document.getElementById('blogImage');
+
+function toggleFileInput() {
+    blogImageInput.style.display = imageSource.value === 'manual' ? 'block' : 'none';
+}
+
+// Run on page load and when dropdown changes
+toggleFileInput();
+imageSource.addEventListener('change', toggleFileInput);
+</script>
+</body>
+</html>
