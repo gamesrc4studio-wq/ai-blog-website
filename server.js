@@ -1,4 +1,4 @@
-require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -13,9 +13,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.BASE_URL || `http://localhost:${PORT}`;
 
-const HF_API_KEY = process.env.API_KEY
-const PEXELS_API_KEY = process.env.OPENROUTER_API_KEY
-
+const HF_API_KEY = process.env.HUGGINGFACE_API_KEY
+const PEXELS_API_KEY = process.env.PEXELS_API_KEY
 const BLOG_FILE = "blogs.json";
 
 
