@@ -167,53 +167,36 @@ async function fetchStockImage(topic) {
 }
 
 /* ================= GENERATE BLOG ================= */
-app.post("/generate-blog", upload.single("image"), async (req, res) => {
-
+async function generateBlogText(topic) {
     try {
-        const { topic, imageSource } = req.body;
-
-        if (!topic) {
-            return res.status(400).json({ error: "Topic required" });
-        }
-
-        const content = await generateBlogText(topic);
-
-        let imageUrl = null;
-
-        if (imageSource === "manual" && req.file) {
-            imageUrl = `/uploads/${req.file.filename}`;
-        } else {
-            imageUrl = await generateAIImage(topic);
-
-            if (!imageUrl) {
-                imageUrl = await fetchStockImage(topic);
+        const res = await axios.post(
+            "https://router.huggingface.co/v1/chat/completions",
+            {
+                model: "openai/gpt-oss-20b:fireworks-ai",
+                messages: [
+                    {
+                        role: "user",
+                        content: `Write a detailed SEO blog about ${topic}`
+                    }
+                ]
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${HF_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                timeout: 60000
             }
-        }
+        );
 
-        const meta = seo(topic, content);
-
-        const blog = {
-            title: topic,
-            content,
-            imageUrl,
-            ...meta,
-            date: new Date().toISOString()
-        };
-
-        const blogs = await loadBlogs();
-        blogs.unshift(blog);
-        await saveBlogs(blogs);
-
-        res.json(blog);
+        return res.data?.choices?.[0]?.message?.content || "";
 
     } catch (err) {
-        console.log("BLOG ERROR:", err.message);
+        console.log("HF FAIL:", err.code || err.message);
 
-        res.status(500).json({
-            error: "Blog generation failed safely"
-        });
+        return `# ${topic}\nAI temporarily unavailable.`;
     }
-});
+}
 
 /* ================= BLOG LIST ================= */
 app.get("/blogs", async (_, res) => {
