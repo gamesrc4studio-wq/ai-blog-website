@@ -1,4 +1,3 @@
-
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -6,29 +5,39 @@ const axios = require("axios");
 const fs = require("fs").promises;
 const path = require("path");
 const marked = require("marked");
-require("dotenv").config({ path: "zorvian.env" })
+require("dotenv").config();
+
 const app = express();
-console.log(process.env.HUGGINGFACE_API_KEY);
-console.log(process.env.PEXELS_API_KEY);
 
 const PORT = process.env.PORT || 3000;
-const BASE_URL = process.env.RENDER_EXTERNAL_URL || "https://ai-blog-website-x7w3.onrender.com";
+const BASE_URL =
+    process.env.RENDER_EXTERNAL_URL ||
+    "http://localhost:3000";
 
-const HF_API_KEY = process.env.HUGGINGFACE_API_KEY
-const PEXELS_API_KEY = process.env.PEXELS_API_KEY
+const HF_API_KEY = process.env.HUGGINGFACE_API_KEY;
+const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
+
 const BLOG_FILE = "blogs.json";
 
+console.log("HF KEY LOADED:", !!HF_API_KEY);
+console.log("PEXELS KEY LOADED:", !!PEXELS_API_KEY);
+
+/* ================= MIDDLEWARE ================= */
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
-/* Uploads  */
+/* ================= CREATE UPLOADS FOLDER ================= */
+
 (async () => {
-    try { await fs.mkdir("uploads"); } catch {}
+    try {
+        await fs.mkdir("uploads");
+    } catch {}
 })();
 
+/* ================= MULTER ================= */
 
 const storage = multer.diskStorage({
     destination: "uploads",
@@ -36,76 +45,98 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
+
 const upload = multer({ storage });
 
+/* ================= HELPERS ================= */
 
 const loadBlogs = async () => {
     try {
-        return JSON.parse(await fs.readFile(BLOG_FILE, "utf8"));
+        const data = await fs.readFile(BLOG_FILE, "utf8");
+        return JSON.parse(data);
     } catch {
         return [];
     }
 };
 
 const saveBlogs = async (blogs) => {
-    await fs.writeFile(BLOG_FILE, JSON.stringify(blogs, null, 2));
+    await fs.writeFile(
+        BLOG_FILE,
+        JSON.stringify(blogs, null, 2)
+    );
 };
 
 const slugify = (text) =>
-    text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    text
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
 
 const seo = (title, content) => ({
     slug: slugify(title),
     metaTitle: `${title} | Complete Guide`,
-    metaDescription: content.replace(/[#*_]/g, "").slice(0, 150),
+    metaDescription: content
+        .replace(/[#*_]/g, "")
+        .slice(0, 150),
     keywords: title.toLowerCase().split(" ").join(", ")
 });
-/* text generator*/
-app.post("/generate-blog", async (req, res) => {
 
-   try {
+/* ================= BLOG TEXT GENERATOR ================= */
 
-      const response = await axios.post(
-         "https://api-inference.huggingface.co/models/google/flan-t5-small",
-         {
-            inputs: "Write a blog about AI"
-         },
-         {
-            headers: {
-               Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-               "Content-Type": "application/json"
+async function generateBlogText(topic) {
+    try {
+
+        console.log("Generating blog:", topic);
+
+        const response = await axios.post(
+            "https://router.huggingface.co/v1/chat/completions",
+            {
+                model: "google/gemma-2-2b-it",
+                messages: [
+                    {
+                        role: "user",
+                        content: `Write a detailed 900-word SEO-friendly human-like blog on "${topic}" with headings and subheadings. Make it natural and engaging.`
+                    }
+                ],
+                max_tokens: 1400,
+                temperature: 0.7
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${HF_API_KEY}`,
+                    "Content-Type": "application/json"
+                },
+                timeout: 120000
             }
-         }
-      );
+        );
 
-      console.log(response.data);
+        console.log("HF SUCCESS");
 
-      res.json(response.data);
+        return response.data.choices[0].message.content;
 
-   } catch (err) {
+    } catch (error) {
 
-      console.log(err.response?.status);
-      console.log(err.response?.data);
+        console.log("HF ERROR STATUS:", error.response?.status);
+        console.log("HF ERROR DATA:", error.response?.data);
+        console.log("HF ERROR MESSAGE:", error.message);
 
-      res.status(500).json({
-         error: err.response?.data || err.message
-      });
-   }
-
-});
-    return res.data.choices[0].message.content;
+        throw new Error("Failed to generate blog");
+    }
 }
 
-/*image generator*/
+/* ================= AI IMAGE ================= */
+
 async function generateAIImage(prompt) {
     try {
+
         console.log("Generating AI image...");
 
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+        const imageUrl =
+            `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
 
         const response = await axios.get(imageUrl, {
             responseType: "arraybuffer",
-            timeout: 200000
+            timeout: 120000
         });
 
         const fileName = `${Date.now()}-ai.png`;
@@ -113,119 +144,215 @@ async function generateAIImage(prompt) {
 
         await fs.writeFile(filePath, response.data);
 
-        console.log("AI Image Generated");
+        console.log("AI IMAGE SUCCESS");
+
         return `/uploads/${fileName}`;
 
     } catch (error) {
-        console.error("AI Image Error:", error.message);
+
+        console.log("AI IMAGE ERROR:", error.message);
+
         return null;
     }
 }
 
-/*PEXELS FALLBACK*/
+/* ================= PEXELS FALLBACK ================= */
+
 async function fetchStockImage(topic) {
     try {
-        const res = await axios.get(
+
+        console.log("Fetching Pexels image...");
+
+        const response = await axios.get(
             "https://api.pexels.com/v1/search",
             {
-                headers: { Authorization: PEXELS_API_KEY },
-                params: { query: topic, per_page: 1 }
+                headers: {
+                    Authorization: PEXELS_API_KEY
+                },
+                params: {
+                    query: topic,
+                    per_page: 1
+                }
             }
         );
 
-        return res.data.photos?.[0]?.src?.large || null;
+        return response.data.photos?.[0]?.src?.large || null;
 
-    } catch {
+    } catch (error) {
+
+        console.log("PEXELS ERROR:", error.message);
+
         return null;
     }
 }
 
 /* ================= GENERATE BLOG ================= */
-app.post("/generate-blog", upload.single("image"), async (req, res) => {
-    const { topic, imageSource } = req.body;
 
-    if (!topic)
-        return res.status(400).json({ error: "Topic required" });
+app.post(
+    "/generate-blog",
+    upload.single("image"),
+    async (req, res) => {
 
-    try {
-        const content = await generateBlogText(topic);
+        try {
 
-        let imageUrl = null;
+            const { topic, imageSource } = req.body;
 
-        if (imageSource === "manual" && req.file) {
-            imageUrl = `/uploads/${req.file.filename}`;
-        } else {
-            imageUrl = await generateAIImage(topic);
-
-            if (!imageUrl) {
-                console.log("Falling back to Pexels...");
-                imageUrl = await fetchStockImage(topic);
+            if (!topic) {
+                return res
+                    .status(400)
+                    .json({ error: "Topic required" });
             }
+
+            const content = await generateBlogText(topic);
+
+            let imageUrl = null;
+
+            if (imageSource === "manual" && req.file) {
+
+                imageUrl = `/uploads/${req.file.filename}`;
+
+            } else {
+
+                imageUrl = await generateAIImage(topic);
+
+                if (!imageUrl) {
+
+                    console.log("Using Pexels fallback");
+
+                    imageUrl = await fetchStockImage(topic);
+                }
+            }
+
+            const meta = seo(topic, content);
+
+            const blog = {
+                title: topic,
+                content,
+                imageUrl,
+                ...meta,
+                date: new Date().toISOString()
+            };
+
+            const blogs = await loadBlogs();
+
+            blogs.unshift(blog);
+
+            await saveBlogs(blogs);
+
+            res.json(blog);
+
+        } catch (error) {
+
+            console.log("BLOG ERROR:", error.message);
+
+            res.status(500).json({
+                error: error.message || "Blog generation failed"
+            });
         }
-
-        const meta = seo(topic, content);
-
-        const blog = {
-            title: topic,
-            content,
-            imageUrl,
-            ...meta,
-            date: new Date().toISOString()
-        };
-
-        const blogs = await loadBlogs();
-        blogs.push(blog);
-        await saveBlogs(blogs);
-
-        res.json(blog);
-
-    } catch (error) {
-        console.error("Blog generation failed:", error.message);
-        res.status(500).json({ error: "Blog generation failed" });
     }
-});
+);
 
 /* ================= GET BLOGS ================= */
+
 app.get("/blogs", async (_, res) => {
-    res.json(await loadBlogs());
+
+    const blogs = await loadBlogs();
+
+    res.json(blogs);
 });
 
-/* ================= READ BLOG ================= */
-app.get("/blog/:slug", async (req, res) => {
-    const blogs = await loadBlogs();
-    const blog = blogs.find(b => b.slug === req.params.slug);
+/* ================= SINGLE BLOG ================= */
 
-    if (!blog) return res.status(404).send("Not found");
+app.get("/blog/:slug", async (req, res) => {
+
+    const blogs = await loadBlogs();
+
+    const blog = blogs.find(
+        (b) => b.slug === req.params.slug
+    );
+
+    if (!blog) {
+        return res.status(404).send("Blog not found");
+    }
 
     const image =
         blog.imageUrl?.startsWith("http")
             ? blog.imageUrl
             : blog.imageUrl
-                ? BASE_URL + blog.imageUrl
-                : "";
+            ? BASE_URL + blog.imageUrl
+            : "";
 
     res.send(`
 <!DOCTYPE html>
 <html>
 <head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>${blog.metaTitle}</title>
+
 <meta name="description" content="${blog.metaDescription}">
-<link rel="stylesheet" href="public/style.css">
+<meta name="keywords" content="${blog.keywords}">
+
+<style>
+
+body{
+    font-family:Arial;
+    max-width:900px;
+    margin:auto;
+    padding:20px;
+    line-height:1.7;
+    background:#f5f5f5;
+    color:#111;
+}
+
+img{
+    width:100%;
+    border-radius:14px;
+    margin:20px 0;
+}
+
+a{
+    text-decoration:none;
+    color:#000;
+}
+
+article{
+    background:white;
+    padding:25px;
+    border-radius:14px;
+}
+
+</style>
+
 </head>
-<body style="font-family:Arial;max-width:800px;margin:auto;padding:20px">
+
+<body>
+
 <a href="/">← Back</a>
+
+<article>
+
 <h1>${blog.title}</h1>
-${image ? `<img src="${image}" style="width:100%;border-radius:12px">` : ""}
+
+${image ? `<img src="${image}" alt="${blog.title}">` : ""}
+
 ${marked.parse(blog.content)}
+
+</article>
+
 </body>
 </html>
 `);
 });
 
-/* ================= STATIC ================= */
-app.get("/", (_, res) =>
-    res.sendFile(path.join(__dirname, "public/index.html"))
-);
+/* ================= HOME ================= */
+
+app.get("/", (_, res) => {
+    res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+/* ================= START ================= */
 
 app.listen(PORT, () => {
     console.log(`Server running at ${BASE_URL}`);
