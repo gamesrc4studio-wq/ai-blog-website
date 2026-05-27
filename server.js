@@ -8,7 +8,8 @@ const path = require("path");
 const marked = require("marked");
 require("dotenv").config({ path: "zorvian.env" })
 const app = express();
-
+console.log(process.env.HUGGINGFACE_API_KEY);
+console.log(process.env.PEXELS_API_KEY);
 
 const PORT = process.env.PORT || 3000;
 const BASE_URL = process.env.RENDER_EXTERNAL_URL || "https://ai-blog-website-x7w3.onrender.com";
