@@ -9,6 +9,7 @@ require("dotenv").config();
 
 const app = express();
 
+/* ================= CONFIG ================= */
 const PORT = process.env.PORT || 3000;
 const BASE_URL =
     process.env.RENDER_EXTERNAL_URL || "http://localhost:3000";
@@ -19,7 +20,6 @@ const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 const BLOG_FILE = "blogs.json";
 
 console.log("HF KEY LOADED:", !!HF_API_KEY);
-console.log("PEXELS KEY LOADED:", !!PEXELS_API_KEY);
 
 /* ================= MIDDLEWARE ================= */
 app.use(cors());
@@ -27,7 +27,7 @@ app.use(express.json());
 app.use(express.static("public"));
 app.use("/uploads", express.static("uploads"));
 
-/* ================= UPLOAD DIR ================= */
+/* ================= UPLOAD FOLDER ================= */
 (async () => {
     try {
         await fs.mkdir("uploads");
@@ -41,6 +41,7 @@ const storage = multer.diskStorage({
         cb(null, Date.now() + path.extname(file.originalname));
     }
 });
+
 const upload = multer({ storage });
 
 /* ================= BLOG STORAGE ================= */
@@ -73,11 +74,11 @@ function seo(title, content) {
     };
 }
 
-/* ================= AI TEXT ================= */
+/* ================= AI TEXT (FIXED) ================= */
 async function generateBlogText(topic) {
     try {
         const response = await axios.post(
-            "https://api-inference.huggingface.co/models/google/flan-t5-base",
+            "https://api-inference.huggingface.co/models/gpt2",
             {
                 inputs: `Write a detailed SEO blog about ${topic}`
             },
@@ -90,27 +91,24 @@ async function generateBlogText(topic) {
             }
         );
 
-        // safer parsing (HF returns different formats sometimes)
-        return response.data[0]?.generated_text || response.data.generated_text;
+        const data = response.data;
+
+        if (Array.isArray(data)) {
+            return data[0]?.generated_text || "";
+        }
+
+        return data.generated_text || "";
 
     } catch (err) {
         console.log("HF ERROR STATUS:", err.response?.status);
         console.log("HF ERROR DATA:", err.response?.data);
-        console.log("HF ERROR:", err.message);
+        console.log("HF ERROR MESSAGE:", err.message);
 
-        throw new Error("AI failed");
-    }
-}
-
-        return response.data.choices[0].message.content;
-
-    } catch (err) {
-        console.log("HF ERROR:", err.response?.data || err.message);
         throw new Error("AI generation failed");
     }
 }
 
-/* ================= IMAGE ================= */
+/* ================= IMAGE GENERATION ================= */
 async function generateAIImage(prompt) {
     try {
         const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
@@ -131,7 +129,7 @@ async function generateAIImage(prompt) {
     }
 }
 
-/* ================= PEXELS ================= */
+/* ================= PEXELS FALLBACK ================= */
 async function fetchStockImage(topic) {
     try {
         const res = await axios.get(
@@ -195,16 +193,18 @@ app.post("/generate-blog", upload.single("image"), async (req, res) => {
 
     } catch (err) {
         console.log("BLOG ERROR:", err.message);
-        res.status(500).json({ error: "Blog generation failed" });
+        res.status(500).json({
+            error: err.message || "Blog generation failed"
+        });
     }
 });
 
-/* ================= BLOGS ================= */
+/* ================= GET BLOGS ================= */
 app.get("/blogs", async (_, res) => {
     res.json(await loadBlogs());
 });
 
-/* ================= BLOG PAGE ================= */
+/* ================= SINGLE BLOG ================= */
 app.get("/blog/:slug", async (req, res) => {
     const blogs = await loadBlogs();
     const blog = blogs.find(b => b.slug === req.params.slug);
