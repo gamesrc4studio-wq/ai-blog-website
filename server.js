@@ -260,3 +260,11 @@ app.get("/", (_, res) => {
 app.listen(PORT, () => {
     console.log("Server running:", BASE_URL);
 });
+app.get("/test-net", async (req, res) => {
+    try {
+        const r = await axios.get("https://google.com");
+        res.send("Internet OK");
+    } catch (e) {
+        res.send("No internet from server");
+    }
+});
