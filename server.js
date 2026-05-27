@@ -61,26 +61,38 @@ const seo = (title, content) => ({
     keywords: title.toLowerCase().split(" ").join(", ")
 });
 /* text generator*/
-async function generateBlogText(topic) {
-    const res = await axios.post(
-        "https://router.huggingface.co/v1/chat/completions",
-        {
-            model: "openai/gpt-oss-20b:fireworks-ai",
-            messages: [
-                {
-                    role: "user",
-                    content: `Write a 900-word detailed human-like SEO blog on "${topic}" with headings and subheadings use less emoji make it human like remove ai feel from it .`
-                }
-            ]
-        },
-        {
-            headers: {
-                Authorization: `Bearer ${HF_API_KEY}`,
-                "Content-Type": "application/json"
-            }
-        }
-    );
+app.post("/generate-blog", async (req, res) => {
 
+   try {
+
+      const response = await axios.post(
+         "https://api-inference.huggingface.co/models/google/flan-t5-small",
+         {
+            inputs: "Write a blog about AI"
+         },
+         {
+            headers: {
+               Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+               "Content-Type": "application/json"
+            }
+         }
+      );
+
+      console.log(response.data);
+
+      res.json(response.data);
+
+   } catch (err) {
+
+      console.log(err.response?.status);
+      console.log(err.response?.data);
+
+      res.status(500).json({
+         error: err.response?.data || err.message
+      });
+   }
+
+});
     return res.data.choices[0].message.content;
 }
 
@@ -218,20 +230,3 @@ app.get("/", (_, res) =>
 app.listen(PORT, () => {
     console.log(`Server running at ${BASE_URL}`);
 });
-try {
-   // code
-const response = await axios.post(
-  "https://api-inference.huggingface.co/models/google/flan-t5-small",
-  {
-    inputs: "Write a blog about AI"
-  },
-  {
-    headers: {
-      Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-      "Content-Type": "application/json"
-    }
-  }
-);
-
-console.log(response.data);
-}
