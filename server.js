@@ -19,6 +19,7 @@ const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 
 const BLOG_FILE = "blogs.json";
 
+/* ================= LOGS ================= */
 console.log("HF KEY LOADED:", !!HF_API_KEY);
 
 /* ================= MIDDLEWARE ================= */
@@ -74,7 +75,7 @@ function seo(title, content) {
     };
 }
 
-/* ================= AI TEXT (FIXED) ================= */
+/* ================= AI BLOG GENERATION (FIXED) ================= */
 async function generateBlogText(topic) {
     try {
         const response = await axios.post(
@@ -100,21 +101,34 @@ async function generateBlogText(topic) {
         return data.generated_text || "";
 
     } catch (err) {
+
+        console.log("HF ERROR CODE:", err.code);
         console.log("HF ERROR STATUS:", err.response?.status);
         console.log("HF ERROR DATA:", err.response?.data);
-        console.log("HF ERROR MESSAGE:", err.message);
+        console.log("HF MESSAGE:", err.message);
 
-        throw new Error("AI generation failed");
+        // 🔥 SAFE FALLBACK (prevents site crash)
+        return `
+# ${topic}
+
+This blog is currently being generated.
+
+AI service is temporarily unavailable due to network issues.
+
+Please refresh or try again in a few seconds.
+        `;
     }
 }
 
-/* ================= IMAGE GENERATION ================= */
+/* ================= IMAGE ================= */
 async function generateAIImage(prompt) {
     try {
-        const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
+        const url =
+            `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}`;
 
         const res = await axios.get(url, {
-            responseType: "arraybuffer"
+            responseType: "arraybuffer",
+            timeout: 120000
         });
 
         const fileName = `${Date.now()}.png`;
@@ -129,7 +143,7 @@ async function generateAIImage(prompt) {
     }
 }
 
-/* ================= PEXELS FALLBACK ================= */
+/* ================= PEXELS ================= */
 async function fetchStockImage(topic) {
     try {
         const res = await axios.get(
@@ -154,6 +168,7 @@ async function fetchStockImage(topic) {
 
 /* ================= GENERATE BLOG ================= */
 app.post("/generate-blog", upload.single("image"), async (req, res) => {
+
     try {
         const { topic, imageSource } = req.body;
 
@@ -193,29 +208,32 @@ app.post("/generate-blog", upload.single("image"), async (req, res) => {
 
     } catch (err) {
         console.log("BLOG ERROR:", err.message);
+
         res.status(500).json({
-            error: err.message || "Blog generation failed"
+            error: "Blog generation failed safely"
         });
     }
 });
 
-/* ================= GET BLOGS ================= */
+/* ================= BLOG LIST ================= */
 app.get("/blogs", async (_, res) => {
     res.json(await loadBlogs());
 });
 
-/* ================= SINGLE BLOG ================= */
+/* ================= BLOG PAGE ================= */
 app.get("/blog/:slug", async (req, res) => {
+
     const blogs = await loadBlogs();
     const blog = blogs.find(b => b.slug === req.params.slug);
 
     if (!blog) return res.status(404).send("Not found");
 
-    const image = blog.imageUrl?.startsWith("http")
-        ? blog.imageUrl
-        : blog.imageUrl
-        ? BASE_URL + blog.imageUrl
-        : "";
+    const image =
+        blog.imageUrl?.startsWith("http")
+            ? blog.imageUrl
+            : blog.imageUrl
+            ? BASE_URL + blog.imageUrl
+            : "";
 
     res.send(`
 <!DOCTYPE html>
