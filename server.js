@@ -6,7 +6,7 @@ const axios = require("axios");
 const fs = require("fs").promises;
 const path = require("path");
 const marked = require("marked");
-require("dotenv").config()
+require("dotenv").config({ path: "zorvian.env" })
 const app = express();
 
 
