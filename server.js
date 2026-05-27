@@ -218,12 +218,14 @@ app.get("/", (_, res) =>
 app.listen(PORT, () => {
     console.log(`Server running at ${BASE_URL}`);
 });
-catch (err) {
-    console.log("FULL ERROR:");
-    console.log(err.response?.status);
-    console.log(err.response?.data);
-    
-    res.status(500).json({
-        error: err.response?.data || err.message
-    });
+try {
+   // code
+} catch (err) {
+   console.log("FULL ERROR:");
+   console.log(err.response?.status);
+   console.log(err.response?.data);
+
+   res.status(500).json({
+      error: err.response?.data || err.message
+   });
 }
