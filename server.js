@@ -77,17 +77,9 @@ function seo(title, content) {
 async function generateBlogText(topic) {
     try {
         const response = await axios.post(
-            "https://router.huggingface.co/v1/chat/completions",
+            "https://api-inference.huggingface.co/models/google/flan-t5-base",
             {
-                model: "google/gemma-2-2b-it",
-                messages: [
-                    {
-                        role: "user",
-                        content: `Write a 900-word SEO blog on "${topic}" with headings.`
-                    }
-                ],
-                max_tokens: 1400,
-                temperature: 0.7
+                inputs: `Write a detailed SEO blog about ${topic}`
             },
             {
                 headers: {
@@ -97,6 +89,18 @@ async function generateBlogText(topic) {
                 timeout: 120000
             }
         );
+
+        // safer parsing (HF returns different formats sometimes)
+        return response.data[0]?.generated_text || response.data.generated_text;
+
+    } catch (err) {
+        console.log("HF ERROR STATUS:", err.response?.status);
+        console.log("HF ERROR DATA:", err.response?.data);
+        console.log("HF ERROR:", err.message);
+
+        throw new Error("AI failed");
+    }
+}
 
         return response.data.choices[0].message.content;
 
