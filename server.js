@@ -220,12 +220,18 @@ app.listen(PORT, () => {
 });
 try {
    // code
-} catch (err) {
-   console.log("FULL ERROR:");
-   console.log(err.response?.status);
-   console.log(err.response?.data);
+const response = await axios.post(
+  "https://api-inference.huggingface.co/models/google/flan-t5-small",
+  {
+    inputs: "Write a blog about AI"
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
+      "Content-Type": "application/json"
+    }
+  }
+);
 
-   res.status(500).json({
-      error: err.response?.data || err.message
-   });
+console.log(response.data);
 }
