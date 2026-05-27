@@ -1,10 +1,13 @@
-const API_URL = "https://ai-blog-website-x7w3.onrender.com";
+// Change this for LOCAL or PROD automatically
+const API_URL =
+    window.location.hostname === "localhost"
+        ? "http://localhost:3000"
+        : "https://ai-blog-website-x7w3.onrender.com";
 
 document.addEventListener("DOMContentLoaded", () => {
     checkUserProfile();
     showSavedBlogs();
 
-    // Close modal when clicking outside content
     const modal = document.getElementById("blogModal");
     if (modal) {
         modal.addEventListener("click", (e) => {
@@ -13,7 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 });
 
-// ✅ Generate Blog
+/* ================= GENERATE BLOG ================= */
+
 async function generateBlog() {
     const topic = document.getElementById("topic").value.trim();
     const imageInput = document.getElementById("blogImage").files[0];
@@ -25,145 +29,185 @@ async function generateBlog() {
     formData.append("topic", topic);
     formData.append("imageSource", imageSource);
 
-    if (imageSource === "manual" && imageInput) formData.append("image", imageInput);
+    if (imageSource === "manual" && imageInput) {
+        formData.append("image", imageInput);
+    }
 
     const blogOutput = document.getElementById("blogOutput");
     blogOutput.innerHTML = "<p>Generating blog...</p>";
 
     try {
-        const response = await fetch(`${API_URL}/generate-blog`, { method: "POST", body: formData });
+        const response = await fetch(`${API_URL}/generate-blog`, {
+            method: "POST",
+            body: formData
+        });
+
         const data = await response.json();
 
-        if (data.error) throw new Error(data.error);
+        if (!response.ok || data.error) {
+            throw new Error(data.error || "Request failed");
+        }
 
-        const imgSrc = data.imageUrl ? (data.imageUrl.startsWith("http") ? data.imageUrl : `${API_URL}${data.imageUrl}`) : "";
-        const imageHTML = imgSrc ? `<img src="${imgSrc}" class="blog-image">` : "";
+        const imgSrc = data.imageUrl
+            ? data.imageUrl.startsWith("http")
+                ? data.imageUrl
+                : `${API_URL}${data.imageUrl}`
+            : "";
 
         blogOutput.innerHTML = `
             <div class="blog-post">
                 <h3 class="blog-title">${data.title}</h3>
-                ${imageHTML}
+                ${imgSrc ? `<img src="${imgSrc}" class="blog-image">` : ""}
                 <div class="blog-content">${marked.parse(data.content)}</div>
             </div>
         `;
 
         showSavedBlogs();
+
     } catch (error) {
         console.error(error);
         blogOutput.innerHTML = "<p>Failed to generate blog.</p>";
     }
 }
 
-// ✅ Fetch and Display Saved Blogs
+/* ================= SHOW BLOGS ================= */
+
 async function showSavedBlogs() {
     const blogContainer = document.getElementById("savedBlogs");
     if (!blogContainer) return;
 
     try {
         const response = await fetch(`${API_URL}/blogs`);
-        if (!response.ok) throw new Error("Failed to fetch blogs");
-
         const blogs = await response.json();
-        blogContainer.innerHTML = blogs.length === 0 ? "<p>No blogs available.</p>" : "";
+
+        blogContainer.innerHTML =
+            blogs.length === 0 ? "<p>No blogs available.</p>" : "";
 
         blogs.forEach((blog) => {
-            const imgSrc = blog.imageUrl ? (blog.imageUrl.startsWith("http") ? blog.imageUrl : `${API_URL}${blog.imageUrl}`) : "";
+            const imgSrc = blog.imageUrl
+                ? blog.imageUrl.startsWith("http")
+                    ? blog.imageUrl
+                    : `${API_URL}${blog.imageUrl}`
+                : "";
 
-            // ✅ Clean preview text (remove Markdown headings and HTML tags)
-            const shortContent = marked.parse(blog.content)
-                .replace(/<[^>]+>/g, '') // Remove HTML tags
-                .substring(0, 150); // Limit length
+            const shortContent = marked
+                .parse(blog.content)
+                .replace(/<[^>]+>/g, "")
+                .substring(0, 150);
 
-            const blogDiv = document.createElement("div");
-            blogDiv.classList.add("blog-post");
-            blogDiv.innerHTML = `
+            const div = document.createElement("div");
+            div.className = "blog-post";
+
+            div.innerHTML = `
                 <h3 class="blog-title">${blog.title}</h3>
                 ${imgSrc ? `<img src="${imgSrc}" class="blog-image">` : ""}
                 <p class="blog-content">${shortContent}...</p>
-                <a href="/blog/${blog.slug}" class="read-more">Read More</a>
+                <a href="${API_URL}/blog/${blog.slug}" class="read-more">Read More</a>
             `;
-            blogContainer.appendChild(blogDiv);
+
+            blogContainer.appendChild(div);
         });
+
     } catch (error) {
         console.error(error);
         blogContainer.innerHTML = "<p>Failed to load blogs.</p>";
     }
 }
 
-// ✅ Open Modal (kept for future use)
+/* ================= MODAL ================= */
+
 async function openModal(index) {
     try {
-        const response = await fetch(`${API_URL}/blogs`);
-        const blogs = await response.json();
-        const blog = blogs[index];
-        if (!blog) return console.error("Blog not found!");
+        const res = await fetch(`${API_URL}/blogs`);
+        const blogs = await res.json();
 
-        const modal = document.getElementById("blogModal");
+        const blog = blogs[index];
+        if (!blog) return;
+
         document.getElementById("modalTitle").innerText = blog.title;
-        document.getElementById("modalContent").innerHTML = marked.parse(blog.content);
+        document.getElementById("modalContent").innerHTML =
+            marked.parse(blog.content);
 
         const modalImage = document.getElementById("modalImage");
+
         if (blog.imageUrl) {
-            modalImage.src = blog.imageUrl.startsWith("http") ? blog.imageUrl : `${API_URL}${blog.imageUrl}`;
+            modalImage.src = blog.imageUrl.startsWith("http")
+                ? blog.imageUrl
+                : `${API_URL}${blog.imageUrl}`;
+
             modalImage.style.display = "block";
         } else {
             modalImage.style.display = "none";
         }
 
-        modal.style.display = "flex";
-    } catch (error) {
-        console.error("Error loading blog:", error);
+        document.getElementById("blogModal").style.display = "flex";
+
+    } catch (err) {
+        console.error(err);
     }
 }
 
-// ✅ Close Modal
 function closeModal() {
-    const modal = document.getElementById("blogModal");
-    if (modal) modal.style.display = "none";
+    document.getElementById("blogModal").style.display = "none";
 }
 
-// ✅ Search Blogs
+/* ================= SEARCH ================= */
+
 function searchBlogs() {
-    const query = document.getElementById("searchBar").value.toLowerCase();
-    document.querySelectorAll(".blog-post").forEach(post => {
-        const title = post.querySelector("h3").innerText.toLowerCase();
-        post.style.display = title.includes(query) ? "block" : "none";
+    const query = document
+        .getElementById("searchBar")
+        .value.toLowerCase();
+
+    document.querySelectorAll(".blog-post").forEach((post) => {
+        const title = post
+            .querySelector("h3")
+            .innerText.toLowerCase();
+
+        post.style.display =
+            title.includes(query) ? "block" : "none";
     });
 }
 
-// ✅ Check if user is logged in
+/* ================= AUTH ================= */
+
 async function checkUserProfile() {
     try {
-        const res = await fetch("/api/me", { credentials: "include" });
+        const res = await fetch(`${API_URL}/api/me`, {
+            credentials: "include"
+        });
+
         const data = await res.json();
 
-        const profileSection = document.getElementById("profileSection");
+        const profileSection =
+            document.getElementById("profileSection");
 
         if (data.loggedIn) {
-            // Logged in
             profileSection.innerHTML = `
                 Welcome, ${data.name} |
                 <a href="/profile.html">Profile</a> |
                 <a href="#" onclick="logoutUser()">Logout</a>
             `;
         } else {
-            // Not logged in
             profileSection.innerHTML = `
                 <a href="/login.html">Login</a> |
                 <a href="/register.html">Register</a>
             `;
         }
+
     } catch (err) {
-        console.error("Profile check failed:", err);
+        console.error(err);
     }
 }
 
-// ✅ Logout function
 async function logoutUser() {
     try {
-        await fetch("/api/logout", { method: "POST", credentials: "include" });
+        await fetch(`${API_URL}/api/logout`, {
+            method: "POST",
+            credentials: "include"
+        });
+
         window.location.reload();
     } catch (err) {
-        console.error("Logout failed:", err);
+        console.error(err);
     }
 }
